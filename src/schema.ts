@@ -1,6 +1,16 @@
 import { createSchema } from 'graphql-yoga';
+import { GraphQLError } from 'graphql';
+import { Prisma } from '@prisma/client';
 import { Link, Comment } from '@prisma/client';
 import { GraphQLContext } from './context';
+
+const parseIntSafe = (value: string): number | null => {
+	if (/^(\d+)$/.test(value)) {
+		return parseInt(value, 10);
+	}
+	return null;
+};
+
 
 const typeDefinitions = /* GraphQL */ `
 	type Query {
@@ -38,8 +48,16 @@ const resolvers = {
 			args: { id: string },
 			context: GraphQLContext
 		) {
+			const id = parseIntSafe(args.id);
+			if (id === null) {
+				return Promise.reject(
+					new GraphQLError(
+						`Cannot post comment on non-existing link with id '${args.id}'.`
+					)
+				);
+			}
 			return await context.prisma.link.findUnique({
-				where: { id: parseInt(args.id) }
+				where: { id }
 			});
 		},
 		async comment(
@@ -47,9 +65,17 @@ const resolvers = {
 			args: { id: string },
 			context: GraphQLContext
 		) {
+			const id = parseIntSafe(args.id);
+			if (id === null) {
+				return Promise.reject(
+					new GraphQLError(
+						`Cannot post comment on non-existing link with id '${args.id}'.`
+					)
+				);
+			}
 			return context.prisma.comment.findUnique({
-				where: { id: parseInt(args.id) },
-				select: {
+				where: { id },
+				select: {		
 					id: true,
 					body: true,
 					createdAt: true,
@@ -74,13 +100,30 @@ const resolvers = {
 			args: { linkId: string; body: string },
 			context: GraphQLContext
 		) {
-			const comment = await context.prisma.comment.create({
+			const linkId = parseIntSafe(args.linkId)
+			if(linkId === null){
+				return Promise.reject(
+					new GraphQLError(
+						`Cannot post comment on non-existing link with id '${args.linkId}'.`
+					)
+				);
+			}
+			const newComment = await context.prisma.comment.create({
 				data: {
-					linkId: parseInt(args.linkId),
+					linkId,
 					body: args.body
 				}
+			}).catch((error: unknown) => {
+				if(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003'){
+					return Promise.reject(
+						new GraphQLError(
+							`Cannot post comment on non-existing link with id '${args.linkId}'.`
+						)
+					);
+				}
+				return Promise.reject(error)
 			});
-			return comment;
+			return newComment;
 		}
 	},
 	Link: {
