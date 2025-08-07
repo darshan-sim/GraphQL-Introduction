@@ -29,31 +29,6 @@ This is a simplified clone of the [HackerNews](https://news.ycombinator.com/) ba
 
 ---
 
-## 📂 Folder Structure
-
-
-```
-src/
-├── graphql/               # GraphQL schema and resolvers
-│   ├── schema.graphql     # Root GraphQL schema definition
-│   ├── context.ts         # GraphQL context
-│   └── server.ts          # GraphQL Yoga server setup
-├── post/                  # Post module
-│   ├── post.resolvers.ts
-│   └── post.service.ts
-├── comment/               # Comment module
-│   ├── comment.resolvers.ts
-│   └── comment.service.ts
-├── prisma/
-│   ├── client.ts          # Prisma client setup
-│   └── seed.ts            # Optional: seed data
-├── main.ts                # Entry point
-└── generated/             # Auto-generated GraphQL resolver types
-
-```
-
----
-
 ## 🛠️ Getting Started
 
 ### 1. Clone and Install
